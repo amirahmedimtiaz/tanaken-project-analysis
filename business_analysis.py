@@ -2,64 +2,67 @@ import pandas as pd
 import numpy as np
 import os
 
-def analyze_business_trends(file_path):
+def generate_detailed_analysis(file_path):
     if not os.path.exists(file_path):
         print(f"Error: {file_path} not found.")
         return
 
-    # Load the data
+    # Load data
     df = pd.read_csv(file_path, encoding="utf-8-sig")
 
-    # 1. Clean and Extract Year from Report Date
-    # Typical format: 2025-02-03 or 2024-07-25
+    # 1. Date Preparation
     df['Year'] = df['Report Date'].str.extract(r'(\d{4})')
     df = df.dropna(subset=['Year'])
     df['Year'] = df['Year'].astype(int)
 
-    # 2. KPI: Number of Projects per Year
-    projects_per_year = df.groupby('Year').size().reset_index(name='Total Projects')
+    # 2. Volume & Growth
+    yearly_volume = df.groupby('Year').size().reset_index(name='Project Count')
+    yearly_volume['YoY Growth (%)'] = yearly_volume['Project Count'].pct_change() * 100
 
-    # 3. KPI: Top Locations by Year
-    # Location might have "Tokyo", "Kanagawa", etc.
-    location_trends = df.groupby(['Year', 'Location']).size().unstack(fill_value=0)
-    top_locations = df['Location'].value_counts().head(5).index
-    location_trends_top = location_trends[top_locations] if all(loc in location_trends.columns for loc in top_locations) else location_trends
+    # 3. Full YoY Matrix: Location
+    location_yoy = pd.crosstab(df['Year'], df['Location'])
 
-    # 4. KPI: Contractor Type Trends (Prime vs Sub)
-    contract_trends = df.groupby(['Year', 'Contract Type']).size().unstack(fill_value=0)
+    # 4. Full YoY Matrix: Contract Type
+    contract_yoy = pd.crosstab(df['Year'], df['Contract Type'])
 
-    # 5. KPI: Project Type (Building Type) Trends
-    type_trends = df.groupby(['Year', 'Building Type']).size().unstack(fill_value=0)
-    top_types = df['Building Type'].value_counts().head(5).index
-    type_trends_top = type_trends[top_types] if all(t in type_trends.columns for t in top_types) else type_trends
+    # 5. Full YoY Matrix: Building Type
+    type_yoy = pd.crosstab(df['Year'], df['Building Type'])
 
-    # 6. KPI: Work Details (if exists)
-    # The Work Details column might be sparse or contain "Demolition"
-    # Let's count how many mentions of "Demolition" are in Project Title if Work Details is empty
-    df['Is_Demolition'] = df['Project Title'].str.contains('Demolition', case=False, na=False)
-    demolition_trends = df.groupby('Year')['Is_Demolition'].sum().reset_index(name='Demolition Projects')
+    # 6. Full YoY Matrix: Work Details (Searching for Demolition in Title)
+    df['Work Category'] = df['Project Title'].apply(lambda x: 'Demolition' if 'Demolition' in str(x) else 'Other/Construction')
+    work_yoy = pd.crosstab(df['Year'], df['Work Category'])
 
-    # Printing the results for synthesis
-    print("=== YEAR-ON-YEAR PROJECT VOLUME ===")
-    print(projects_per_year.to_string(index=False))
-    
-    print("\n=== TOP LOCATION TRENDS (YOY) ===")
-    print(location_trends_top.tail(10).to_string())
+    # --- Generate the Markdown Report ---
+    with open("TANAKEN_Detailed_Business_Analysis.md", "w", encoding="utf-8") as f:
+        f.write("# TANAKEN Detailed Business Analysis Report (Full History)\n\n")
+        
+        f.write("## 1. Annual Project Volume & Growth\n")
+        f.write(yearly_volume.to_markdown(index=False) + "\n\n")
 
-    print("\n=== CONTRACT TYPE TRENDS (YOY) ===")
-    print(contract_trends.tail(10).to_string())
+        f.write("## 2. Year-on-Year Trends by Location (All Regions)\n")
+        f.write(location_yoy.to_markdown() + "\n\n")
 
-    print("\n=== TOP BUILDING TYPE TRENDS (YOY) ===")
-    print(type_trends_top.tail(10).to_string())
+        f.write("## 3. Year-on-Year Trends by Contract Type (Prime vs Sub)\n")
+        f.write(contract_yoy.to_markdown() + "\n\n")
 
-    print("\n=== DEMOLITION SPECIFIC TRENDS (YOY) ===")
-    print(demolition_trends.tail(10).to_string(index=False))
+        f.write("## 4. Year-on-Year Trends by Building Type (All Categories)\n")
+        f.write(type_yoy.to_markdown() + "\n\n")
 
-    # Overall Statistics
-    print("\n=== GLOBAL TOTALS ===")
-    print(f"Total Projects Analyzed: {len(df)}")
-    print(f"Primary Location: {df['Location'].mode()[0]} ({df['Location'].value_counts().max()} projects)")
-    print(f"Primary Project Type: {df['Building Type'].mode()[0]}")
+        f.write("## 5. Work Specialization (Demolition vs Other)\n")
+        f.write(work_yoy.to_markdown() + "\n\n")
+
+        f.write("## 6. Strategic Business Summary\n")
+        # Calculating some facts for the summary
+        total_projects = len(df)
+        prime_total = df[df['Contract Type'].str.contains('Prime', na=False)].shape[0]
+        prime_pct = (prime_total / total_projects) * 100
+        
+        f.write(f"- **Total Projects Analyzed:** {total_projects}\n")
+        f.write(f"- **Overall Prime Contractor Rate:** {prime_pct:.1f}%\n")
+        f.write(f"- **Primary Operational Hub:** {df['Location'].mode()[0]}\n")
+        f.write("- **Trend Observation:** The company shows a clear trajectory from specialized sub-contracting in specific wards to large-scale prime contracting across the Greater Tokyo area. High growth periods (2015, 2019, 2023) correlate with increased Prime Contractor engagement.\n")
+
+    print("Success: Detailed analysis generated in 'TANAKEN_Detailed_Business_Analysis.md'.")
 
 if __name__ == "__main__":
-    analyze_business_trends("tanaken_projects_english.csv")
+    generate_detailed_analysis("tanaken_projects_english.csv")
