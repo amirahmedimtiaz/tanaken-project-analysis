@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 
-def generate_detailed_analysis(file_path):
+def generate_pivot_report(file_path):
     if not os.path.exists(file_path):
         print(f"Error: {file_path} not found.")
         return
@@ -15,54 +15,67 @@ def generate_detailed_analysis(file_path):
     df = df.dropna(subset=['Year'])
     df['Year'] = df['Year'].astype(int)
 
-    # 2. Volume & Growth
+    def create_sorted_pivot(df, row_col):
+        # Create pivot with Year as columns and category as rows
+        pivot = pd.crosstab(df[row_col], df['Year'], margins=True, margins_name="Grand Total")
+        
+        # Sort rows (excluding Grand Total) by the Grand Total column descending
+        data_rows = pivot.drop("Grand Total")
+        total_row = pivot.loc[["Grand Total"]]
+        
+        data_rows = data_rows.sort_values(by="Grand Total", ascending=False)
+        
+        # Combine back
+        sorted_pivot = pd.concat([data_rows, total_row])
+        
+        # Ensure year columns (numeric) are sorted ascending (left to right)
+        # The Grand Total column will naturally be at the end due to margins=True
+        return sorted_pivot
+
+    # 2. Pivot Table: Location vs Year
+    pivot_location = create_sorted_pivot(df, 'Location')
+
+    # 3. Pivot Table: Contract Type vs Year
+    pivot_contract = create_sorted_pivot(df, 'Contract Type')
+
+    # 4. Pivot Table: Building Type vs Year
+    pivot_type = create_sorted_pivot(df, 'Building Type')
+
+    # 5. Volume & Growth Summary
     yearly_volume = df.groupby('Year').size().reset_index(name='Project Count')
-    yearly_volume['YoY Growth (%)'] = yearly_volume['Project Count'].pct_change() * 100
-
-    # 3. Full YoY Matrix: Location
-    location_yoy = pd.crosstab(df['Year'], df['Location'])
-
-    # 4. Full YoY Matrix: Contract Type
-    contract_yoy = pd.crosstab(df['Year'], df['Contract Type'])
-
-    # 5. Full YoY Matrix: Building Type
-    type_yoy = pd.crosstab(df['Year'], df['Building Type'])
-
-    # 6. Full YoY Matrix: Work Details (Searching for Demolition in Title)
-    df['Work Category'] = df['Project Title'].apply(lambda x: 'Demolition' if 'Demolition' in str(x) else 'Other/Construction')
-    work_yoy = pd.crosstab(df['Year'], df['Work Category'])
+    yearly_volume['YoY Growth (%)'] = yearly_volume['Project Count'].pct_change().fillna(0) * 100
+    yearly_volume['YoY Growth (%)'] = yearly_volume['YoY Growth (%)'].map('{:,.1f}%'.format)
 
     # --- Generate the Markdown Report ---
     with open("TANAKEN_Detailed_Business_Analysis.md", "w", encoding="utf-8") as f:
-        f.write("# TANAKEN Detailed Business Analysis Report (Full History)\n\n")
+        f.write("# TANAKEN Comprehensive Business Pivot Analysis\n\n")
         
-        f.write("## 1. Annual Project Volume & Growth\n")
+        f.write("## 1. Annual Project Volume & Growth Summary\n")
         f.write(yearly_volume.to_markdown(index=False) + "\n\n")
 
-        f.write("## 2. Year-on-Year Trends by Location (All Regions)\n")
-        f.write(location_yoy.to_markdown() + "\n\n")
+        f.write("## 2. Pivot Table: Location vs Year (Sorted by Volume)\n")
+        f.write("> Rows are sorted by total project count in descending order. Years are columns (First to Last).\n\n")
+        f.write(pivot_location.to_markdown() + "\n\n")
 
-        f.write("## 3. Year-on-Year Trends by Contract Type (Prime vs Sub)\n")
-        f.write(contract_yoy.to_markdown() + "\n\n")
+        f.write("## 3. Pivot Table: Contract Type vs Year (Sorted by Volume)\n")
+        f.write("> Rows are sorted by total project count in descending order. Years are columns (First to Last).\n\n")
+        f.write(pivot_contract.to_markdown() + "\n\n")
 
-        f.write("## 4. Year-on-Year Trends by Building Type (All Categories)\n")
-        f.write(type_yoy.to_markdown() + "\n\n")
+        f.write("## 4. Pivot Table: Building Type vs Year (Sorted by Volume)\n")
+        f.write("> Rows are sorted by total project count in descending order. Years are columns (First to Last).\n\n")
+        f.write(pivot_type.to_markdown() + "\n\n")
 
-        f.write("## 5. Work Specialization (Demolition vs Other)\n")
-        f.write(work_yoy.to_markdown() + "\n\n")
-
-        f.write("## 6. Strategic Business Summary\n")
-        # Calculating some facts for the summary
+        f.write("## 5. Strategic Summary\n")
         total_projects = len(df)
         prime_total = df[df['Contract Type'].str.contains('Prime', na=False)].shape[0]
         prime_pct = (prime_total / total_projects) * 100
         
-        f.write(f"- **Total Projects Analyzed:** {total_projects}\n")
-        f.write(f"- **Overall Prime Contractor Rate:** {prime_pct:.1f}%\n")
-        f.write(f"- **Primary Operational Hub:** {df['Location'].mode()[0]}\n")
-        f.write("- **Trend Observation:** The company shows a clear trajectory from specialized sub-contracting in specific wards to large-scale prime contracting across the Greater Tokyo area. High growth periods (2015, 2019, 2023) correlate with increased Prime Contractor engagement.\n")
+        f.write(f"- **Total Database Records:** {total_projects}\n")
+        f.write(f"- **Lifetime Prime Contractor Adoption:** {prime_pct:.1f}%\n")
+        f.write(f"- **Core Market Ward:** {df['Location'].mode()[0]}\n")
+        f.write("- **Analysis Note:** These pivot tables prioritize high-volume categories at the top of the rows, allowing for immediate identification of key business drivers across the 2010-2025 timeline.\n")
 
-    print("Success: Detailed analysis generated in 'TANAKEN_Detailed_Business_Analysis.md'.")
+    print("Success: Refined pivot tables embedded in 'TANAKEN_Detailed_Business_Analysis.md'.")
 
 if __name__ == "__main__":
-    generate_detailed_analysis("tanaken_projects_english.csv")
+    generate_pivot_report("tanaken_projects_english.csv")
