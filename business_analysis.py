@@ -15,6 +15,15 @@ def generate_pivot_report(file_path):
     df = df.dropna(subset=['Year'])
     df['Year'] = df['Year'].astype(int)
 
+    # Clean Contract Type (Japanese to English mapping)
+    contract_mapping = {
+        '元請け': 'Prime Contractor',
+        '元請': 'Prime Contractor',
+        '下請け': 'Subcontractor',
+        '下請': 'Subcontractor'
+    }
+    df['Contract Type'] = df['Contract Type'].replace(contract_mapping)
+
     def create_sorted_pivot(df, row_col):
         # Create pivot with Year as columns and category as rows
         pivot = pd.crosstab(df[row_col], df['Year'], margins=True, margins_name="Grand Total")

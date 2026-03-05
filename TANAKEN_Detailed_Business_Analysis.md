@@ -44,13 +44,11 @@
 ## 3. Pivot Table: Contract Type vs Year (Sorted by Volume)
 > Rows are sorted by total project count in descending order. Years are columns (First to Last).
 
-| Contract Type   |   2010 |   2011 |   2012 |   2013 |   2014 |   2015 |   2016 |   2017 |   2018 |   2019 |   2020 |   2021 |   2022 |   2023 |   2024 |   2025 |   Grand Total |
-|:----------------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|--------------:|
-| 元請              |      2 |      2 |      2 |      1 |      4 |      7 |      5 |      4 |      0 |      6 |      8 |      4 |      0 |      0 |      0 |      0 |            45 |
-| 下請              |      2 |      1 |      3 |      1 |      1 |      7 |      5 |      6 |      1 |      8 |      4 |      1 |      0 |      0 |      0 |      0 |            40 |
-| 元請け             |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      4 |     11 |      5 |      1 |            21 |
-| 下請け             |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      0 |      2 |      1 |      1 |      0 |             4 |
-| Grand Total     |      4 |      3 |      5 |      2 |      5 |     14 |     10 |     10 |      1 |     14 |     12 |      5 |      6 |     12 |      6 |      1 |           110 |
+| Contract Type    |   2010 |   2011 |   2012 |   2013 |   2014 |   2015 |   2016 |   2017 |   2018 |   2019 |   2020 |   2021 |   2022 |   2023 |   2024 |   2025 |   Grand Total |
+|:-----------------|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|--------------:|
+| Prime Contractor |      2 |      2 |      2 |      1 |      4 |      7 |      5 |      4 |      0 |      6 |      8 |      4 |      4 |     11 |      5 |      1 |            66 |
+| Subcontractor    |      2 |      1 |      3 |      1 |      1 |      7 |      5 |      6 |      1 |      8 |      4 |      1 |      2 |      1 |      1 |      0 |            44 |
+| Grand Total      |      4 |      3 |      5 |      2 |      5 |     14 |     10 |     10 |      1 |     14 |     12 |      5 |      6 |     12 |      6 |      1 |           110 |
 
 ## 4. Pivot Table: Building Type vs Year (Sorted by Volume)
 > Rows are sorted by total project count in descending order. Years are columns (First to Last).
@@ -82,6 +80,6 @@
 
 ## 5. Strategic Summary
 - **Total Database Records:** 110
-- **Lifetime Prime Contractor Adoption:** 0.0%
+- **Lifetime Prime Contractor Adoption:** 60.0%
 - **Core Market Ward:** Tokyo
 - **Analysis Note:** These pivot tables prioritize high-volume categories at the top of the rows, allowing for immediate identification of key business drivers across the 2010-2025 timeline.
