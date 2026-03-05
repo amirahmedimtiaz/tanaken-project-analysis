@@ -1,0 +1,17 @@
+# Virtual Environment
+myenv/
+venv/
+.env
+
+# Cache and temporary files
+cache/
+__pycache__/
+*.py[cod]
+
+# Data (Optional: keep if you want the CSVs in GitHub, 
+# but usually it's better to ignore large data files)
+# tanaken_projects.csv
+# tanaken_projects_english.csv
+
+# OS files
+.DS_Store
